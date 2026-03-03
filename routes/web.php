@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Models\Incidencia;
 
 Route::get('/', function () {
-    return redirect()->route('login');
+    return redirect()->route('register');
 });
 
 // --- GRUPO PROTEGIDO PARA ADMIN ---

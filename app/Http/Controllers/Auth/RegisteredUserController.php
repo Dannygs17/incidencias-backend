@@ -40,11 +40,9 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             
-            // --- CAMBIOS PARA QUE SEA ADMIN DESDE WEB ---
-            'role' => 'admin',         // Forzamos rol Admin
-            'status' => 'approved',    // Forzamos estatus Aprobado
-            // 'curp' => null,         // La dejamos vacía (es nullable en la BD)
-            // --------------------------------------------
+            'role' => 'admin',         
+            'status' => 'approved',    
+         
         ]);
 
         event(new Registered($user));
