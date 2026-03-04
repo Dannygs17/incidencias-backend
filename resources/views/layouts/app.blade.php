@@ -5,6 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ config('app.name', 'Laravel') }}</title>
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased text-gray-900 dark:text-gray-100">
@@ -38,6 +40,13 @@
                             </svg>
                             <span class="font-medium">Incidencias</span>
                         </a>
+                        <a href="{{ route('admin.estadisticas') }}" 
+   class="flex items-center p-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('admin.estadisticas') ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-indigo-600' }}">
+    
+    <i class="fa-solid fa-chart-line w-5 text-center mr-3 text-lg transition-colors {{ request()->routeIs('admin.estadisticas') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-500' }}"></i>
+
+    <span class="font-medium">Estadísticas</span>
+</a>
 
                     </nav>
                 </div>

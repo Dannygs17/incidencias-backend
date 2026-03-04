@@ -62,11 +62,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
   
 
         Route::get('tabla-incidencias/{categoria}', [IncidenciaController::class, 'tablaIncidencias'])
-    ->name('admin.tabla_incidencias');
+            ->name('admin.tabla_incidencias');
 
-
+        Route::get('/admin/estadisticas', [IncidenciaController::class, 'dashboardAdmin'])
+        ->name('admin.estadisticas');
 
 });
+
+        
 
 
 
