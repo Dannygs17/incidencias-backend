@@ -58,7 +58,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $user->delete();
         return back()->with('success', 'Usuario eliminado.');
     })->name('admin.eliminar');
+
+  
+
+        Route::get('tabla-incidencias/{categoria}', [IncidenciaController::class, 'tablaIncidencias'])
+    ->name('admin.tabla_incidencias');
+
+
+
 });
+
+
+
 
 // Rutas de Perfil (Breeze)
 Route::middleware('auth')->group(function () {

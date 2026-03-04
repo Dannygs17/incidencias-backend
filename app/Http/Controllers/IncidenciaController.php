@@ -58,7 +58,25 @@ class IncidenciaController extends Controller
         ];
 
         return view('Admin.incidencias', compact('conteos'));
+        
     }
+
+    // NUEVA FUNCIÓN (para la tabla detallada)
+public function tablaIncidencias($categoria)
+{
+    // Obtenemos las incidencias filtradas por la categoría que viene en la URL
+    $incidencias = Incidencia::where('categoria', $categoria)->get();
+
+    return view('Admin.tabla_incidencias', compact('incidencias', 'categoria'));
+}
+
+
+
+
+
+
+
+    ///Esto es ionic 
 
     // --- NUEVA FUNCIÓN PARA LA APP MÓVIL (Mis Reportes) ---
     public function misReportes()
