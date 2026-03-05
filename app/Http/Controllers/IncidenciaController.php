@@ -70,6 +70,14 @@ public function tablaIncidencias($categoria)
     return view('Admin.tabla_incidencias', compact('incidencias', 'categoria'));
 }
 
+//Funcion para mostrar vista incidencias 
+
+public function mostrarEstadisticas()
+{
+    return view('Admin.estadisticas');
+}
+
+
 
 
 

@@ -40,13 +40,19 @@
                             </svg>
                             <span class="font-medium">Incidencias</span>
                         </a>
-                        <a href="{{ route('admin.estadisticas') }}" 
-   class="flex items-center p-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('admin.estadisticas') ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-indigo-600' }}">
-    
-    <i class="fa-solid fa-chart-line w-5 text-center mr-3 text-lg transition-colors {{ request()->routeIs('admin.estadisticas') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-500' }}"></i>
 
-    <span class="font-medium">Estadísticas</span>
-</a>
+                        <a href="{{ route('admin.estadisticas') }}" 
+                         class="flex items-center p-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('admin.estadisticas') ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-indigo-600' }}">
+                        <svg class="w-5 h-5 mr-3 transition-colors {{ request()->routeIs('admin.estadisticas') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-500' }}" fill="none"  stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                         </svg>
+                         <span class="font-medium">Estadísticas</span>
+                         </a>
+
+                       
+                        </a>
+                        
+                     
 
                     </nav>
                 </div>
