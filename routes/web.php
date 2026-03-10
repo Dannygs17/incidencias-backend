@@ -71,6 +71,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/estadisticas', [IncidenciaController::class, 'mostrarEstadisticas'])
         ->name('admin.estadisticas');
 
+
+
+        
+
+        
+
 });
 
 

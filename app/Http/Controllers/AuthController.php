@@ -82,20 +82,21 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
-                'status' => $user->status
+                'status' => $user->status,
+                'curp' => $user->curp // <--- ¡AQUÍ ESTÁ LA SOLUCIÓN!
             ]
         ]);
     }
 
    // --- LOGOUT ---
-public function logout(Request $request) {
-    // Al llamar a este método, Sanctum identifica el token usado
-    // y lo elimina de la base de datos permanentemente.
-    $request->user()->currentAccessToken()->delete();
+   public function logout(Request $request) {
+       // Al llamar a este método, Sanctum identifica el token usado
+       // y lo elimina de la base de datos permanentemente.
+       $request->user()->currentAccessToken()->delete();
 
-    return response()->json([
-        'message' => 'Sesión cerrada y token destruido'
-    ]);
-}
+       return response()->json([
+           'message' => 'Sesión cerrada y token destruido'
+       ]);
+   }
 
 }
