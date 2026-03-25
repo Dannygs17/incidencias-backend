@@ -11,6 +11,19 @@ export default {
 
     theme: {
         extend: {
+            colors:{
+                'smart': {
+                    'cobalto': '#0033FF',
+                    'niebla': '#CCEEFF',
+                    'interface-bg': '#F5F8FA',
+                    'text': '#212121',
+                    'line': '#B0BEC5',
+                    'action': '#007BFF',
+                    'success': '#1ABC9C',
+                    'error': '#E74C3C',
+                    'warning': '#F39C12',
+                },
+            },
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
