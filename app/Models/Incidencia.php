@@ -9,13 +9,12 @@ class Incidencia extends Model
 {
     use HasFactory;
 
-    // Indicamos el nombre de la tabla (opcional si sigue la convención, pero mejor asegurar)
     protected $table = 'incidencias';
 
-    // Estos son los campos que permitimos que Ionic guarde en la BD
+    // Actualizamos los campos permitidos
     protected $fillable = [
         'user_id',
-        'categoria',
+        'categoria_id', // Cambiado de 'categoria' a 'categoria_id'
         'descripcion',
         'imagen_path',
         'latitud',
@@ -23,9 +22,15 @@ class Incidencia extends Model
         'estado'
     ];
 
-    // Relación con el usuario (para saber quién hizo el reporte)
+    // Relación con el usuario (quién reportó)
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    // NUEVA RELACIÓN: Para saber a qué categoría pertenece el reporte
+    public function categoria()
+    {
+        return $this->belongsTo(Categoria::class);
     }
 }

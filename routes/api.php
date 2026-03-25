@@ -17,12 +17,14 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/login-google', [AuthController::class, 'loginGoogle']);
 
+
 // --- RUTAS PROTEGIDAS (Middleware Sanctum) ---
 Route::middleware('auth:sanctum')->group(function () {
     
     // Obtener datos frescos del usuario (Sincronización de estatus)
     // Apuntamos al método 'me' o 'show' del controlador para mantener orden
     Route::get('/user', [AuthController::class, 'me']); 
+    
 
     // --- VERIFICACIÓN DE IDENTIDAD (Google Users) ---
     Route::post('/verificar-cuenta', [AuthController::class, 'verificarCuenta']);
@@ -35,7 +37,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // --- RUTAS DE INCIDENCIAS (REPORTES) ---
     Route::post('/incidencias', [IncidenciaController::class, 'store']); 
     Route::get('/mis-reportes', [IncidenciaController::class, 'misReportes']);
+    Route::get('/categorias', [App\Http\Controllers\CategoriaController::class, 'getCategoriasApi']);
 
     // Cerrar sesión (Mata el token en la base de datos)
     Route::post('/logout', [AuthController::class, 'logout']);
+
 });

@@ -5,6 +5,7 @@ use App\Http\Controllers\IncidenciaController;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
 use App\Models\Incidencia;
+use App\Http\Controllers\CategoriaController;
 
 Route::get('/', function () {
     return redirect()->route('register');
@@ -70,6 +71,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // 4. PANEL DE ESTADÍSTICAS
     Route::get('/admin/estadisticas', [IncidenciaController::class, 'mostrarEstadisticas'])
         ->name('admin.estadisticas');
+
+    // 5. PANEL DE CATEGORÍAS (CRUD)
+
+    Route::prefix('admin')->group(function () {
+    Route::get('/categorias', [CategoriaController::class, 'index'])->name('categorias.index');
+    Route::post('/categorias', [CategoriaController::class, 'store'])->name('categorias.store');
+    Route::put('/categorias/{id}', [CategoriaController::class, 'update'])->name('categorias.update');
+    Route::delete('/categorias/{id}', [CategoriaController::class, 'destroy'])->name('categorias.destroy');
+});
+   
 
 
 

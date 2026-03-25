@@ -13,22 +13,21 @@ return new class extends Migration
             // Relación con el usuario que reporta
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             
-            // Categoría: Aquí guardaremos "agua" (y las que decidas mantener)
-            // Puedes usar un ENUM si la lista es fija, o string si planeas expandirla.
-            $table->enum('categoria', ['agua', 'alumbrado', 'bacheo','basura'])->default('agua');
+            // NUEVA RELACIÓN: Conectamos con la tabla de categorías
+            // Usamos nullable() por si acaso, aunque lo ideal es que siempre tenga una
+            $table->foreignId('categoria_id')->constrained('categorias')->onDelete('restrict');
             
             $table->text('descripcion')->nullable();
             
-            // Para la funcionalidad de la foto (.photo-container)
+            // Para la funcionalidad de la foto
             $table->string('imagen_path')->nullable();
             
-            // Para la funcionalidad del mapa (Google Maps)
-            // Usamos decimal con suficiente precisión para coordenadas GPS
+            // Para la funcionalidad del mapa (GPS)
             $table->decimal('latitud', 10, 8)->nullable();
             $table->decimal('longitud', 11, 8)->nullable();
             
-            // Estado del reporte
-            $table->string('estado')->default('pendiente'); // pendiente, atendido, etc.
+            // Estado del reporte: pendiente, en proceso, resuelto, etc.
+            $table->string('estado')->default('pendiente'); 
             
             $table->timestamps();
         });
