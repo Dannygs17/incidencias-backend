@@ -2,10 +2,11 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\IncidenciaController;
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\AdminUserController; 
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
 use App\Models\Incidencia;
-use App\Http\Controllers\CategoriaController;
 
 Route::get('/', function () {
     return redirect()->route('register');
@@ -26,45 +27,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('dashboard', compact('pendientesAprobar', 'reportesNuevos'));
     })->name('dashboard');
 
-    // 2. PANEL DE USUARIOS (Lista y Gestión)
-    Route::get('/admin/usuarios', function () {
-        $users = User::where('role', 'ciudadano')->orderBy('created_at', 'desc')->get();
-        return view('Admin.usuarios', compact('users'));
-    })->name('admin.usuarios');
-
-    // --- Acciones de Gestión de Usuarios ---
-    Route::post('/admin/user/{id}/approve', function ($id) {
-        $user = User::findOrFail($id);
-        $user->status = 'approved';
-        $user->save();
-        return back()->with('success', 'Usuario aprobado.');
-    })->name('admin.aprobar');
-
-    Route::post('/admin/user/{id}/reject', function ($id) {
-        $user = User::findOrFail($id);
-        $user->status = 'rejected';
-        $user->save();
-        $user->tokens()->delete(); 
-        return back()->with('success', 'Usuario rechazado.');
-    })->name('admin.rechazar');
-
-    Route::delete('/admin/user/{id}', function ($id) {
-        $user = User::findOrFail($id);
-        $user->tokens()->delete(); 
-        $user->delete();
-        return back()->with('success', 'Usuario eliminado.');
-    })->name('admin.eliminar');
-
+    // PANEL DE USUARIOS 
+    Route::get('/admin/usuarios', [AdminUserController::class, 'index'])->name('admin.usuarios');
+    Route::post('/admin/user/{id}/approve', [AdminUserController::class, 'approve'])->name('admin.aprobar');
+    Route::post('/admin/user/{id}/reject', [AdminUserController::class, 'reject'])->name('admin.rechazar');
+    Route::delete('/admin/user/{id}', [AdminUserController::class, 'destroy'])->name('admin.eliminar');
 
     // 3. PANEL DE INCIDENCIAS (Gestión de Reportes)
     Route::get('/admin/incidencias', [IncidenciaController::class, 'dashboardAdmin'])
         ->name('admin.incidencias');
 
-    // --- Vista de Tabla Filtrada (Pendiente, En Proceso, Resuelto) ---
     Route::get('tabla-incidencias/{categoria}', [IncidenciaController::class, 'tablaIncidencias'])
         ->name('admin.tabla_incidencias');
 
-    // --- Acción del Modal: Actualizar estado de una incidencia ---
     Route::post('admin/incidencia/{id}/estado', [IncidenciaController::class, 'actualizarEstado'])
         ->name('admin.actualizar_estado_incidencia');
 
@@ -73,26 +48,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('admin.estadisticas');
 
     // 5. PANEL DE CATEGORÍAS (CRUD)
-
     Route::prefix('admin')->group(function () {
-    Route::get('/categorias', [CategoriaController::class, 'index'])->name('categorias.index');
-    Route::post('/categorias', [CategoriaController::class, 'store'])->name('categorias.store');
-    Route::put('/categorias/{id}', [CategoriaController::class, 'update'])->name('categorias.update');
-    Route::delete('/categorias/{id}', [CategoriaController::class, 'destroy'])->name('categorias.destroy');
+        Route::get('/categorias', [CategoriaController::class, 'index'])->name('categorias.index');
+        Route::post('/categorias', [CategoriaController::class, 'store'])->name('categorias.store');
+        Route::put('/categorias/{id}', [CategoriaController::class, 'update'])->name('categorias.update');
+        Route::delete('/categorias/{id}', [CategoriaController::class, 'destroy'])->name('categorias.destroy');
+    });
 });
-   
-
-
-
-        
-
-        
-
-});
-
 
 // RUTAS DE PERFIL (Laravel Breeze)
-
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
