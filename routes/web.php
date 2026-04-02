@@ -27,11 +27,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('dashboard', compact('pendientesAprobar', 'reportesNuevos'));
     })->name('dashboard');
 
-    // PANEL DE USUARIOS 
+    // 2. PANEL DE USUARIOS 
     Route::get('/admin/usuarios', [AdminUserController::class, 'index'])->name('admin.usuarios');
+    
+    // Acciones individuales (en singular)
     Route::post('/admin/user/{id}/approve', [AdminUserController::class, 'approve'])->name('admin.aprobar');
     Route::post('/admin/user/{id}/reject', [AdminUserController::class, 'reject'])->name('admin.rechazar');
+    Route::post('/admin/user/{id}/corregir', [AdminUserController::class, 'solicitarCorreccion'])->name('admin.usuarios.corregir');
+    
     Route::delete('/admin/user/{id}', [AdminUserController::class, 'destroy'])->name('admin.eliminar');
+
+   
 
     // 3. PANEL DE INCIDENCIAS (Gestión de Reportes)
     Route::get('/admin/incidencias', [IncidenciaController::class, 'dashboardAdmin'])
@@ -61,6 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+   
 });
 
 require __DIR__.'/auth.php';

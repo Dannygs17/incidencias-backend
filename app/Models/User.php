@@ -26,8 +26,10 @@ class User extends Authenticatable
         'role',
         'curp',
         'ine_frente',  
-        'ine_reverso', // <--- Nuevo
+        'ine_reverso', 
         'status',
+        'rejection_reason',
+        'correction_fields',
 
     ];
 
@@ -51,6 +53,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'correction_fields' => 'array',
         ];
     }
 }

@@ -5,12 +5,22 @@
         </h2>
     </x-slot>
 
-    <div class="py-12" x-data="{ openModal: false, selectedUser: {} }">
+    <div class="py-12" x-data="{ openModal: false, selectedUser: {}, showCorrection: false }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             
             @if(session('success'))
-                <div class="mb-4 p-4 bg-green-500/20 border border-green-500 text-green-100 rounded-lg">
+                <div class="mb-4 p-4 bg-green-500/20 border border-green-500 text-green-100 rounded-lg flex items-center justify-between">
                     {{ session('success') }}
+                </div>
+            @endif
+            @if(session('warning'))
+                <div class="mb-4 p-4 bg-orange-500/20 border border-orange-500 text-orange-100 rounded-lg">
+                    {{ session('warning') }}
+                </div>
+            @endif
+            @if(session('danger'))
+                <div class="mb-4 p-4 bg-red-500/20 border border-red-500 text-red-100 rounded-lg">
+                    {{ session('danger') }}
                 </div>
             @endif
 
@@ -48,19 +58,28 @@
                                         <td class="py-4 px-4 text-center text-sm">
                                             @php
                                                 $statusClasses = [
-                                                    'pending'  => 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-                                                    'approved' => 'bg-green-500/10 text-green-500 border-green-500/20',
-                                                    'rejected' => 'bg-red-500/10 text-red-500 border-red-500/20',
-                                                    'invitado' => 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+                                                    'pending'         => 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+                                                    'approved'        => 'bg-green-500/10 text-green-500 border-green-500/20',
+                                                    'rejected'        => 'bg-red-500/10 text-red-500 border-red-500/20',
+                                                    'invitado'        => 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+                                                    'action_required' => 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+                                                ];
+                                                
+                                                $nombresEstatus = [
+                                                    'approved' => 'Aprobado',
+                                                    'pending' => 'Pendiente',
+                                                    'action_required' => 'Con Observaciones',
+                                                    'rejected' => 'Rechazado',
+                                                    'invitado' => 'Invitado'
                                                 ];
                                             @endphp
                                             <span class="px-3 py-1 border rounded-full font-medium {{ $statusClasses[$user->status] ?? $statusClasses['pending'] }}">
-                                                {{ ucfirst($user->status == 'approved' ? 'Aprobado' : ($user->status == 'pending' ? 'Pendiente' : $user->status)) }}
+                                                {{ $nombresEstatus[$user->status] ?? ucfirst($user->status) }}
                                             </span>
                                         </td>
                                         <td class="py-4 px-4 text-right">
                                             <div class="flex justify-end gap-3">
-                                                <button @click="openModal = true; selectedUser = {{ json_encode($user) }}" 
+                                                <button @click="openModal = true; showCorrection = false; selectedUser = {{ json_encode($user) }}" 
                                                         class="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition" title="Ver Detalles">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                                 </button>
@@ -85,9 +104,11 @@
         </div>
 
         <div x-show="openModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto" x-cloak>
-            <div class="fixed inset-0 bg-black/80 transition-opacity" @click="openModal = false"></div>
+            <div class="fixed inset-0 bg-black/80 transition-opacity" x-show="openModal" x-transition.opacity @click="openModal = false"></div>
             
-            <div class="relative w-full max-w-2xl bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl p-6" @click.stop>
+            <div class="relative w-full max-w-2xl bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl p-6" 
+                 x-show="openModal" x-transition.scale.95 @click.stop>
+                
                 <div class="flex justify-between items-start mb-6">
                     <div>
                         <h2 class="text-2xl font-bold text-white">Validación de Identidad</h2>
@@ -136,35 +157,94 @@
                     </div>
                 </div>
 
-                <div class="mt-10 flex justify-end items-center gap-4 border-t border-gray-800 pt-6">
-                    <button @click="openModal = false" class="text-gray-400 hover:text-white font-medium transition">
-                        Cerrar
-                    </button>
+                <div class="mt-10 border-t border-gray-800 pt-6">
+                    
+                    <div x-show="!showCorrection" x-transition.opacity class="flex justify-end items-center gap-3">
+                      
+                        <form x-show="selectedUser.status !== 'rejected'" 
+                              :action="'/admin/user/' + selectedUser.id + '/reject'" 
+                              method="POST" onsubmit="return confirm('¿Estás seguro de BLOQUEAR permanentemente a este usuario?')">
+                            @csrf 
+                            <button type="submit" class="text-red-500 hover:bg-red-500/10 px-4 py-2 rounded-lg font-bold transition">
+                                Bloqueo Definitivo
+                            </button>
+                        </form>
 
-                    <form x-show="selectedUser.status !== 'rejected'" 
-                          :action="'/admin/user/' + selectedUser.id + '/reject'" 
-                          method="POST">
-                        @csrf 
-                        <button type="submit" class="bg-red-600/20 text-red-500 border border-red-600/50 hover:bg-red-600 hover:text-white px-6 py-2 rounded-lg font-bold transition">
-                            Rechazar Cuenta
+                        <button x-show="selectedUser.status !== 'approved' && selectedUser.status !== 'rejected'" 
+                                @click="showCorrection = true" 
+                                type="button" 
+                                class="bg-orange-600/20 text-orange-500 border border-orange-600/50 hover:bg-orange-600 hover:text-white px-4 py-2 rounded-lg font-bold transition">
+                            Pedir Corrección
                         </button>
-                    </form>
 
-                    <form x-show="selectedUser.status !== 'approved'" 
-                          :action="'/admin/user/' + selectedUser.id + '/approve'" 
-                          method="POST">
-                        @csrf 
-                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded-lg font-bold shadow-lg shadow-green-900/20 transition">
-                            Aprobar y Notificar
-                        </button>
-                    </form>
+                        <form x-show="selectedUser.status !== 'approved'" 
+                              :action="'/admin/user/' + selectedUser.id + '/approve'" 
+                              method="POST">
+                            @csrf 
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg shadow-green-900/20 transition">
+                                Aprobar y Notificar
+                            </button>
+                        </form>
 
-                    <template x-if="selectedUser.status === 'approved'">
-                        <span class="text-green-500 font-bold flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            Usuario ya verificado
-                        </span>
-                    </template>
+                        <template x-if="selectedUser.status === 'approved'">
+                            <span class="text-green-500 font-bold flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Usuario ya verificado
+                            </span>
+                        </template>
+                    </div>
+
+                    <div x-show="showCorrection" x-transition.opacity style="display: none;">
+                        
+                        <form :action="'/admin/user/' + selectedUser.id + '/corregir'" method="POST" x-data="{ selectedFields: [] }">
+                            @csrf
+
+                            <label class="block text-sm font-bold text-orange-400 mb-2">
+                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                                ¿Qué documentos debe volver a enviar? (Mínimo uno)
+                            </label>
+                            <div class="flex flex-col gap-3 mb-5 bg-gray-800/50 p-4 rounded-xl border border-gray-700">
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="correction_fields[]" value="curp" x-model="selectedFields" 
+                                           class="form-checkbox h-5 w-5 text-orange-500 rounded border-gray-600 bg-gray-900 focus:ring-orange-500 focus:ring-offset-gray-900">
+                                    <span class="ml-3 text-sm text-gray-300 font-medium">Clave CURP</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="correction_fields[]" value="ine_frente" x-model="selectedFields" 
+                                           class="form-checkbox h-5 w-5 text-orange-500 rounded border-gray-600 bg-gray-900 focus:ring-orange-500 focus:ring-offset-gray-900">
+                                    <span class="ml-3 text-sm text-gray-300 font-medium">Fotografía de INE (Frente)</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="correction_fields[]" value="ine_reverso" x-model="selectedFields" 
+                                           class="form-checkbox h-5 w-5 text-orange-500 rounded border-gray-600 bg-gray-900 focus:ring-orange-500 focus:ring-offset-gray-900">
+                                    <span class="ml-3 text-sm text-gray-300 font-medium">Fotografía de INE (Reverso)</span>
+                                </label>
+                            </div>
+
+                            <label class="block text-sm font-bold text-orange-400 mb-2">
+                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                Motivo de la corrección
+                            </label>
+                            <p class="text-xs text-gray-500 mb-3">Este mensaje acompañará la solicitud en la app móvil.</p>
+                            
+                            <textarea name="motivo" required rows="3" 
+                                      class="w-full bg-gray-900 border border-gray-700 rounded-xl text-white p-4 focus:ring-orange-500 focus:border-orange-500 mb-4 placeholder-gray-600" 
+                                      placeholder="Ej: La fotografía del reverso está borrosa y no se distinguen los datos..."></textarea>
+                            
+                            <div class="flex justify-end gap-3">
+                                <button type="button" @click="showCorrection = false; selectedFields = []" class="text-gray-400 hover:text-white px-4 py-2 transition font-medium">
+                                    Cancelar
+                                </button>
+                                <button type="submit" 
+                                        :disabled="selectedFields.length === 0"
+                                        :class="selectedFields.length === 0 ? 'opacity-50 cursor-not-allowed bg-orange-500/50' : 'bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-900/20'"
+                                        class="text-white px-6 py-2 rounded-lg font-bold transition">
+                                    Enviar al Ciudadano
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
                 </div>
             </div>
         </div>

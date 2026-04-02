@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    // --- REGISTRO MANUAL (Usuarios que no usan Google) ---
+    // --- REGISTRO MANUAL ---
     public function register(Request $request) {
         $request->validate([
             'name' => 'required|string',
@@ -21,7 +21,6 @@ class AuthController extends Controller
             'ine_reverso' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // Guardado físico en Storage
         $pathFrente = $request->file('ine_frente')->store('ine_images', 'public');
         $pathReverso = $request->file('ine_reverso')->store('ine_images', 'public');
 
@@ -36,10 +35,19 @@ class AuthController extends Controller
             'status' => 'pending' 
         ]);
 
-        return response()->json(['message' => 'Registro exitoso.', 'status' => 'pending'], 201);
+        // === CAMBIO CLAVE: Creamos el token inmediatamente ===
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Devolvemos el token en la respuesta
+        return response()->json([
+            'message' => 'Registro exitoso.', 
+            'access_token' => $token,
+            'user' => $user,
+            'status' => 'pending'
+        ], 201);
     }
 
-    // --- LOGIN NORMAL ---
+    // --- LOGIN NORMAL (Email y Password) ---
     public function login(Request $request) {
         $request->validate(['email' => 'required|email', 'password' => 'required']);
         
@@ -49,9 +57,9 @@ class AuthController extends Controller
             return response()->json(['message' => 'Credenciales incorrectas'], 401);
         }
 
-        // Bloqueo si la cuenta fue rechazada por el administrador
+        // BLOQUEO: Si la cuenta está rechazada
         if ($user->status === 'rejected') {
-            return response()->json(['message' => 'Tu cuenta ha sido rechazada. Contacta al soporte.'], 403); 
+            return response()->json(['message' => 'Tu acceso ha sido revocado permanentemente.'], 403); 
         }
 
         return response()->json([
@@ -60,7 +68,7 @@ class AuthController extends Controller
         ]);
     }
 
-    // --- LOGIN CON GOOGLE ---
+    // --- LOGIN CON GOOGLE (Firebase) ---
     public function loginGoogle(Request $request) {
         $request->validate([
             'email' => 'required|email',
@@ -69,6 +77,13 @@ class AuthController extends Controller
         ]);
 
         $user = User::where('email', $request->email)->first();
+
+        // BLOQUEO: Si el usuario de Google ya existía y fue rechazado
+        if ($user && $user->status === 'rejected') {
+            return response()->json([
+                'message' => 'Esta cuenta de Google ha sido bloqueada para el sistema.'
+            ], 403);
+        }
 
         // Si el usuario no existe, lo creamos como "invitado"
         if (!$user) {
@@ -88,44 +103,57 @@ class AuthController extends Controller
         ]);
     }
 
-    // --- VERIFICACIÓN DE DOCUMENTOS (Para usuarios de Google) ---
-    // Recibe FormData desde Ionic con archivos reales
+    // --- VERIFICACIÓN DE DOCUMENTOS (Acepta actualizaciones parciales) ---
     public function verificarCuenta(Request $request) 
     {
+        // 1. Ahora son 'nullable', el usuario puede mandar 1, 2 o los 3 campos.
         $request->validate([
-            'curp' => 'required|string|size:18',
-            'ine_frente' => 'required|image|mimes:jpg,jpeg,png|max:2048', 
-            'ine_reverso' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'curp' => 'nullable|string|size:18',
+            'ine_frente' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', 
+            'ine_reverso' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $user = $request->user();
 
-        // 1. Guardamos archivos en Storage (public/ine_images)
-        $pathFrente = $request->file('ine_frente')->store('ine_images', 'public');
-        $pathReverso = $request->file('ine_reverso')->store('ine_images', 'public');
+        // 2. Solo actualizamos lo que SÍ se envió en la petición
+        if ($request->has('curp') && $request->curp != null) {
+            $user->curp = strtoupper($request->curp);
+        }
 
-        // 2. Actualizamos el registro del usuario
-        $user->update([
-            'curp' => strtoupper($request->curp),
-            'ine_frente' => $pathFrente,
-            'ine_reverso' => $pathReverso,
-            'status' => 'pending' // Cambia de 'invitado' a 'pending'
-        ]);
+        if ($request->hasFile('ine_frente')) {
+            $user->ine_frente = $request->file('ine_frente')->store('ine_images', 'public');
+        }
+
+        if ($request->hasFile('ine_reverso')) {
+            $user->ine_reverso = $request->file('ine_reverso')->store('ine_images', 'public');
+        }
+
+        // 3. Lo devolvemos al estatus de revisión y limpiamos su historial de errores
+        $user->status = 'pending';
+        $user->rejection_reason = null;
+        $user->correction_fields = null; 
+        $user->save();
 
         return response()->json([
-            'message' => 'Documentación recibida. Estatus actualizado a pendiente.',
+            'message' => 'Documentación actualizada. En revisión.',
             'user' => $user
         ]);
     }
 
-    // --- OBTENER DATOS ACTUALIZADOS (Sincronización en tiempo real) ---
-    // Este es el que llama la app para ver si el admin ya aprobó al usuario
+    // --- SINCRONIZACIÓN (Estatus en tiempo real) ---
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        $user = $request->user();
+
+        // BLOQUEO EN CALIENTE: Si el admin rechaza mientras el usuario está logueado
+        if ($user->status === 'rejected') {
+            $user->tokens()->delete(); // Expulsión inmediata
+            return response()->json(['message' => 'Sesión revocada'], 403);
+        }
+
+        return response()->json($user);
     }
 
-    // --- CERRAR SESIÓN ---
     public function logout(Request $request) {
         $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'Sesión cerrada']);
