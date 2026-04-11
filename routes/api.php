@@ -22,9 +22,10 @@ Route::post('/login-google', [AuthController::class, 'loginGoogle']);
 Route::middleware('auth:sanctum')->group(function () {
     
     // Obtener datos frescos del usuario (Sincronización de estatus)
-    // Apuntamos al método 'me' o 'show' del controlador para mantener orden
     Route::get('/user', [AuthController::class, 'me']); 
     
+    // --- GUARDAR TOKEN DE NOTIFICACIONES ---
+    Route::post('/user/fcm-token', [AuthController::class, 'saveFcmToken']);
 
     // --- VERIFICACIÓN DE IDENTIDAD (Google Users) ---
     Route::post('/verificar-cuenta', [AuthController::class, 'verificarCuenta']);
@@ -39,7 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/mis-reportes', [IncidenciaController::class, 'misReportes']);
     Route::get('/categorias', [App\Http\Controllers\CategoriaController::class, 'getCategoriasApi']);
 
-    // Cerrar sesión (Mata el token en la base de datos)
+    // Cerrar sesión
     Route::post('/logout', [AuthController::class, 'logout']);
 
 });

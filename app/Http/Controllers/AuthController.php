@@ -139,6 +139,22 @@ class AuthController extends Controller
         ]);
     }
 
+    // --- GUARDAR TOKEN DE NOTIFICACIONES (FCM) ---
+    public function saveFcmToken(Request $request)
+    {
+        $request->validate([
+            'fcm_token' => 'required|string',
+        ]);
+
+        $user = $request->user();
+        $user->fcm_token = $request->fcm_token;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Token de dispositivo guardado correctamente.'
+        ]);
+    }
+
     // --- SINCRONIZACIÓN (Estatus en tiempo real) ---
     public function me(Request $request)
     {
@@ -154,7 +170,13 @@ class AuthController extends Controller
     }
 
     public function logout(Request $request) {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        
+        // Limpiamos el token de notificaciones para que no reciba alertas si cerró sesión
+        $user->fcm_token = null;
+        $user->save();
+
+        $user->currentAccessToken()->delete();
         return response()->json(['message' => 'Sesión cerrada']);
     }
 }
