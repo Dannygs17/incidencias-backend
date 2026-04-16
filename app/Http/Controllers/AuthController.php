@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage; 
 use Illuminate\Support\Str;
 
+// --- NUEVAS IMPORTACIONES PARA EL CORREO DEL PIN ---
+use App\Mail\RecuperarPasswordPin;
+use Illuminate\Support\Facades\Mail;
+
 class AuthController extends Controller
 {
     // --- REGISTRO MANUAL ---
@@ -178,5 +182,57 @@ class AuthController extends Controller
 
         $user->currentAccessToken()->delete();
         return response()->json(['message' => 'Sesión cerrada']);
+    }
+
+    // ====================================================
+    // --- NUEVAS FUNCIONES PARA RECUPERAR CONTRASEÑA ---
+    // ====================================================
+
+    // --- 1. GENERAR Y ENVIAR EL PIN ---
+    public function forgotPassword(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+        
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            // Respondemos con éxito falso por seguridad (para que hackers no adivinen correos)
+            return response()->json(['message' => 'Si el correo existe, enviaremos un PIN.'], 200);
+        }
+
+        // Generar un PIN aleatorio de 6 dígitos
+        $pin = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+        
+        // Guardarlo en la base de datos temporalmente
+        $user->reset_pin = $pin;
+        $user->save();
+
+        // Enviar el correo usando la plantilla
+        Mail::to($user->email)->send(new RecuperarPasswordPin($pin));
+
+        return response()->json(['message' => 'Si el correo existe, enviaremos un PIN.'], 200);
+    }
+
+    // --- 2. VERIFICAR PIN Y CAMBIAR CONTRASEÑA ---
+    public function resetPasswordPin(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'pin' => 'required|string|size:6',
+            'password' => 'required|string|min:6|confirmed'
+        ]);
+
+        $user = User::where('email', $request->email)->where('reset_pin', $request->pin)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'El código PIN es incorrecto o ha expirado.'], 400);
+        }
+
+        // Actualizar la contraseña
+        $user->password = Hash::make($request->password);
+        $user->reset_pin = null; // Borramos el PIN para que no se re-use
+        $user->save();
+
+        return response()->json(['message' => 'Contraseña actualizada correctamente.'], 200);
     }
 }

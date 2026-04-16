@@ -108,7 +108,7 @@
             </div>
         </div>
 
-        {{-- MODAL DE VALIDACIÓN (IMÁGENES CORREGIDAS) --}}
+        {{-- MODAL DE VALIDACIÓN  --}}
         <div x-show="openModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md" x-cloak>
             <div class="fixed inset-0 bg-black/80 transition-opacity" x-show="openModal" x-transition.opacity @click="openModal = false"></div>
             

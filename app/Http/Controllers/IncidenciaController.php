@@ -10,6 +10,12 @@ use Illuminate\Support\Facades\Storage;
 use App\Mail\ReporteResuelto;
 use Illuminate\Support\Facades\Mail;
 
+// --- NUEVAS IMPORTACIONES PARA FIREBASE (PUSH NOTIFICATIONS) ---
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
+use Illuminate\Support\Facades\Log;
+
 class IncidenciaController extends Controller
 {
     // ==========================================
@@ -111,7 +117,7 @@ class IncidenciaController extends Controller
         return view('admin.tabla_incidencias', compact('incidencias', 'categoria', 'estadoActual', 'conteos'));
     }
 
-    // ACTUALIZADO: Maneja la subida de foto de evidencia, el comentario y ENVÍA EL CORREO
+    // ACTUALIZADO: Maneja la subida de foto de evidencia, el comentario y ENVÍA EL CORREO + PUSH NOTIFICATION
     public function actualizarEstado(Request $request, $id)
     {
         $request->validate([
@@ -120,7 +126,7 @@ class IncidenciaController extends Controller
             'evidencia'        => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120', // Máx 5MB
         ]);
 
-        $incidencia = Incidencia::findOrFail($id);
+        $incidencia = Incidencia::with('user')->findOrFail($id);
         $incidencia->estado = $request->nuevo_estado;
 
         // Guardar comentario si existe
@@ -137,15 +143,54 @@ class IncidenciaController extends Controller
 
         $incidencia->save();
 
-        // === NUEVO: ENVIAR CORREO SI EL ESTADO ES RESUELTO ===
-        if ($incidencia->estado === 'resuelto') {
-            // Se le envía al correo del usuario que hizo la incidencia
-            Mail::to($incidencia->user->email)->send(new ReporteResuelto($incidencia));
-            
-            return back()->with('success', 'El estado del reporte ha sido actualizado y el ciudadano fue notificado por correo.');
+        // === ENVIAR NOTIFICACIÓN PUSH A FIREBASE (INDIFERENTE DEL ESTADO) ===
+        $usuario = $incidencia->user;
+        
+        if ($usuario && $usuario->fcm_token) {
+            try {
+                // Instanciar Firebase con la llave maestra
+                $firebase = (new Factory)
+                    ->withServiceAccount(storage_path('app/firebase-credentials.json'));
+                
+                $messaging = $firebase->createMessaging();
+
+                // Construir el título y mensaje dependiendo del estatus
+                $titulo = ($incidencia->estado === 'resuelto') ? '¡Reporte Resuelto! ✅' : 'Reporte en Proceso 🚧';
+                $cuerpo = 'Tu reporte de la categoría "' . ($incidencia->categoria->nombre ?? 'Incidencia') . '" ha cambiado a estado: ' . strtoupper($incidencia->estado) . '.';
+                
+                if ($incidencia->comentario_admin) {
+                    $cuerpo .= ' Comentario: ' . $incidencia->comentario_admin;
+                }
+
+                // Preparamos el mensaje usando el formato de array (Compatible con v8+)
+                $mensaje = CloudMessage::fromArray([
+                    'token' => $usuario->fcm_token,
+                    'notification' => [
+                        'title' => $titulo,
+                        'body'  => $cuerpo,
+                    ],
+                ]);
+
+                // Enviamos el mensaje
+                $messaging->send($mensaje);
+                Log::info('Notificación Push enviada a: ' . $usuario->email);
+            } catch (\Exception $e) {
+                Log::error('Error enviando notificación Push: ' . $e->getMessage());
+            }
         }
 
-        return back()->with('success', 'El estado del reporte ha sido actualizado.');
+        // === ENVIAR CORREO SI EL ESTADO ES RESUELTO ===
+        if ($incidencia->estado === 'resuelto') {
+            try {
+                 Mail::to($usuario->email)->send(new ReporteResuelto($incidencia));
+                 return back()->with('success', 'Reporte actualizado, ciudadano notificado por Push y Correo.');
+            } catch (\Exception $e) {
+                 Log::error('Error enviando correo: ' . $e->getMessage());
+                 return back()->with('success', 'Reporte actualizado y notificación Push enviada (falló el correo).');
+            }
+        }
+
+        return back()->with('success', 'El estado del reporte ha sido actualizado y se envió la notificación Push.');
     }
 
 
