@@ -17,9 +17,21 @@ class Categoria extends Model
         'icono'
     ];
 
-    // Relación: Una categoría tiene muchas incidencias
+    // Relación original
     public function incidencias()
     {
         return $this->hasMany(Incidencia::class, 'categoria_id');
+    }
+
+    // NUEVO: Relación para contar solo pendientes
+    public function incidenciasPendientes()
+    {
+        return $this->hasMany(Incidencia::class, 'categoria_id')->where('estado', 'pendiente');
+    }
+
+    // NUEVO: Relación para contar solo en proceso
+    public function incidenciasEnProceso()
+    {
+        return $this->hasMany(Incidencia::class, 'categoria_id')->where('estado', 'en proceso');
     }
 }

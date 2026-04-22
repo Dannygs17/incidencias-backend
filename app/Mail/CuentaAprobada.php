@@ -30,7 +30,7 @@ class CuentaAprobada extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.cuenta_aprobada', // Esta vista la crearemos en el paso 3
+            view: 'emails.cuenta_aprobada', 
         );
     }
 }

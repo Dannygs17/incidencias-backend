@@ -10,7 +10,8 @@ class CategoriaController extends Controller
     // Mostrar lista de categorías (Panel Web)
     public function index()
     {
-        $categorias = Categoria::all();
+        // NUEVO: Usamos withCount para traer los contadores de forma optimizada
+        $categorias = Categoria::withCount(['incidenciasPendientes', 'incidenciasEnProceso'])->get();
         return view('admin.categorias', compact('categorias'));
     }
 
@@ -19,7 +20,7 @@ class CategoriaController extends Controller
     {
         $request->validate([
             'nombre' => 'required|unique:categorias,nombre',
-            'icono'  => 'required|string' // <-- Agregamos la validación del icono
+            'icono'  => 'required|string'
         ]);
         
         Categoria::create($request->all());
@@ -31,7 +32,7 @@ class CategoriaController extends Controller
     {
         $request->validate([
             'nombre' => 'required|unique:categorias,nombre,'.$id,
-            'icono'  => 'required|string' // <-- Agregamos la validación del icono
+            'icono'  => 'required|string'
         ]);
         
         $categoria = Categoria::findOrFail($id);

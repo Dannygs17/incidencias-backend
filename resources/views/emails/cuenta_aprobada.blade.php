@@ -22,9 +22,7 @@
         
         <p>A partir de este momento, ya puedes iniciar sesión en la aplicación móvil para comenzar a enviar tus reportes de incidencias ciudadanas y ayudarnos a mejorar nuestra ciudad.</p>
         
-        <div style="text-align: center;">
-            <a href="#" class="btn">Abrir Aplicación Móvil</a>
-        </div>
+       
         
         <p style="margin-top: 30px;">Agradecemos tu participación cívica.</p>
         

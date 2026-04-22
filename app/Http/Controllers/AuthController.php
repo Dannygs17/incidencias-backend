@@ -19,10 +19,24 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string',
             'email' => 'required|string|email|unique:users',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:6|confirmed',
             'curp' => 'required|string|unique:users',
             'ine_frente' => 'required|image|mimes:jpg,jpeg,png|max:2048', 
             'ine_reverso' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+        ], [
+            'name.required' => 'El nombre completo es obligatorio.',
+            'email.required' => 'El correo electrónico es obligatorio.',
+            'email.email' => 'Ingresa un correo electrónico válido (ej. usuario@correo.com).',
+            'email.unique' => 'Este correo ya está registrado en el sistema.',
+            'password.required' => 'La contraseña es obligatoria.',
+            'password.min' => 'La contraseña debe tener al menos 6 caracteres.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+            'curp.required' => 'La CURP es obligatoria.',
+            'curp.unique' => 'Esta CURP ya se encuentra registrada en otra cuenta.',
+            'ine_frente.required' => 'La foto frontal del INE es obligatoria.',
+            'ine_reverso.required' => 'La foto del reverso del INE es obligatoria.',
+            'ine_frente.max' => 'La imagen frontal es muy pesada (Máximo 2MB).',
+            'ine_reverso.max' => 'La imagen del reverso es muy pesada (Máximo 2MB).',
         ]);
 
         $pathFrente = $request->file('ine_frente')->store('ine_images', 'public');
@@ -59,11 +73,10 @@ class AuthController extends Controller
             return response()->json(['message' => 'Credenciales incorrectas'], 401);
         }
 
-        // BLOQUEO: Si la cuenta está rechazada
         if ($user->status === 'rejected') {
             return response()->json([
                 'message' => 'Tu acceso ha sido revocado permanentemente.',
-                'motivo' => $user->rejection_reason // <--- Retornamos el motivo al Frontend
+                'motivo' => $user->rejection_reason
             ], 403); 
         }
 
@@ -83,15 +96,13 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        // BLOQUEO: Si el usuario de Google ya existía y fue rechazado
         if ($user && $user->status === 'rejected') {
             return response()->json([
                 'message' => 'Esta cuenta de Google ha sido bloqueada para el sistema.',
-                'motivo' => $user->rejection_reason // <--- Retornamos el motivo al Frontend
+                'motivo' => $user->rejection_reason
             ], 403);
         }
 
-        // Si el usuario no existe, lo creamos como "invitado"
         if (!$user) {
             $user = User::create([
                 'name' => $request->name,
@@ -109,7 +120,7 @@ class AuthController extends Controller
         ]);
     }
 
-    // --- VERIFICACIÓN DE DOCUMENTOS (Acepta actualizaciones parciales) ---
+    // --- VERIFICACIÓN DE DOCUMENTOS ---
     public function verificarCuenta(Request $request) 
     {
         $request->validate([
@@ -144,6 +155,7 @@ class AuthController extends Controller
     }
 
     // --- GUARDAR TOKEN DE NOTIFICACIONES (FCM) ---
+    // SOLUCIÓN: Usamos trim() para asegurar que no haya espacios invisibles que rompan Firebase
     public function saveFcmToken(Request $request)
     {
         $request->validate([
@@ -151,7 +163,7 @@ class AuthController extends Controller
         ]);
 
         $user = $request->user();
-        $user->fcm_token = $request->fcm_token;
+        $user->fcm_token = trim($request->fcm_token); // Limpia la cadena
         $user->save();
 
         return response()->json([
@@ -159,12 +171,11 @@ class AuthController extends Controller
         ]);
     }
 
-    // --- SINCRONIZACIÓN (Estatus en tiempo real) ---
+    // --- SINCRONIZACIÓN ---
     public function me(Request $request)
     {
         $user = $request->user();
 
-        // BLOQUEO EN CALIENTE: Si el admin rechaza mientras el usuario está logueado
         if ($user->status === 'rejected') {
             $user->tokens()->delete(); 
             return response()->json(['message' => 'Sesión revocada'], 403);
@@ -175,8 +186,6 @@ class AuthController extends Controller
 
     public function logout(Request $request) {
         $user = $request->user();
-        
-        // Limpiamos el token de notificaciones para que no reciba alertas si cerró sesión
         $user->fcm_token = null;
         $user->save();
 
@@ -185,10 +194,9 @@ class AuthController extends Controller
     }
 
     // ====================================================
-    // --- NUEVAS FUNCIONES PARA RECUPERAR CONTRASEÑA ---
+    // --- RECUPERAR CONTRASEÑA ---
     // ====================================================
 
-    // --- 1. GENERAR Y ENVIAR EL PIN ---
     public function forgotPassword(Request $request)
     {
         $request->validate(['email' => 'required|email']);
@@ -196,24 +204,18 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            // Respondemos con éxito falso por seguridad (para que hackers no adivinen correos)
             return response()->json(['message' => 'Si el correo existe, enviaremos un PIN.'], 200);
         }
 
-        // Generar un PIN aleatorio de 6 dígitos
         $pin = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
-        
-        // Guardarlo en la base de datos temporalmente
         $user->reset_pin = $pin;
         $user->save();
 
-        // Enviar el correo usando la plantilla
         Mail::to($user->email)->send(new RecuperarPasswordPin($pin));
 
         return response()->json(['message' => 'Si el correo existe, enviaremos un PIN.'], 200);
     }
 
-    // --- 2. VERIFICAR PIN Y CAMBIAR CONTRASEÑA ---
     public function resetPasswordPin(Request $request)
     {
         $request->validate([
@@ -228,9 +230,8 @@ class AuthController extends Controller
             return response()->json(['message' => 'El código PIN es incorrecto o ha expirado.'], 400);
         }
 
-        // Actualizar la contraseña
         $user->password = Hash::make($request->password);
-        $user->reset_pin = null; // Borramos el PIN para que no se re-use
+        $user->reset_pin = null; 
         $user->save();
 
         return response()->json(['message' => 'Contraseña actualizada correctamente.'], 200);

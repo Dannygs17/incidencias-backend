@@ -87,12 +87,13 @@ class IncidenciaController extends Controller
     // ==========================================
     // RUTAS PARA EL PANEL DE ADMINISTRACIÓN (WEB)
     // ==========================================
-
     public function dashboardAdmin()
     {
-        $categorias = Categoria::withCount(['incidencias' => function($query) {
-            $query->where('estado', 'pendiente');
-        }])->where('activa', true)->get();
+        // NUEVO: Contamos por separado pendientes y en proceso
+        $categorias = Categoria::withCount([
+            'incidenciasPendientes as incidencias_pendientes_count', 
+            'incidenciasEnProceso as incidencias_en_proceso_count'
+        ])->where('activa', true)->get();
 
         return view('admin.incidencias', compact('categorias'));
     }

@@ -83,11 +83,29 @@
                                         </div>
                                     </td>
 
-                                    {{-- Celda Nombre --}}
+                                    {{-- Celda Nombre NUEVA CON CONTADORES --}}
                                     <td class="block md:table-cell py-2 md:py-4 px-0 md:px-6">
-                                        <div class="md:hidden text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Nombre:</div>
-                                        <div class="font-black text-lg md:text-xl text-gray-800 dark:text-white tracking-tight">
-                                            {{ $cat->nombre }}
+                                        <div class="md:hidden text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Nombre y Estatus:</div>
+                                        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                            <div class="font-black text-lg md:text-xl text-gray-800 dark:text-white tracking-tight">
+                                                {{ $cat->nombre }}
+                                            </div>
+                                            
+                                            <div class="flex flex-wrap gap-2">
+                                                {{-- Badge Pendientes --}}
+                                                @if($cat->incidencias_pendientes_count > 0)
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-smart-error/10 text-smart-error border border-smart-error/20 uppercase tracking-tighter">
+                                                        {{ $cat->incidencias_pendientes_count }} Pendientes
+                                                    </span>
+                                                @endif
+
+                                                {{-- Badge En Proceso --}}
+                                                @if($cat->incidencias_en_proceso_count > 0)
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-smart-warning/10 text-smart-warning border border-smart-warning/20 uppercase tracking-tighter">
+                                                        {{ $cat->incidencias_en_proceso_count }} En Proceso
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </div>
                                     </td>
 

@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-black text-2xl text-smart-text tracking-wide">
-            {{ __('Dashboard de Incidencias') }}
+            {{ __(' Panel de Incidencias') }}
         </h2>
     </x-slot>
 
@@ -31,25 +31,44 @@
                         ];
                         $tema = $paleta[$loop->index % count($paleta)];
                         
-                        $pendientes = $cat->incidencias_count ?? 0;
+                        // Recuperamos los conteos separados que definimos en el controlador
+                        $pendientes = $cat->incidencias_pendientes_count ?? 0;
+                        $enProceso = $cat->incidencias_en_proceso_count ?? 0;
                     @endphp
 
                     <a href="{{ route('admin.tabla_incidencias', $cat->id) }}" 
                        class="bg-white dark:bg-[#212121] p-8 rounded-xl shadow-sm border-t-4 {{ $tema['border'] }} relative text-center hover:shadow-lg dark:hover:bg-[#2a2a2a] transition-all cursor-pointer group transform hover:-translate-y-1 border border-gray-100 dark:border-white/5">
                         
-                        @if($pendientes > 0)
-                            <span class="absolute top-4 right-4 {{ $tema['badgeBg'] }} {{ $tema['badgeText'] }} text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1 animate-bounce duration-300" style="animation-iteration-count: 3;">
-                                <span class="h-1.5 w-1.5 rounded-full bg-current animate-pulse"></span>
-                                {{ $pendientes }} PENDIENTES
-                            </span>
+                        {{-- EVALUAMOS LOS BADGES DE FORMA INDEPENDIENTE PARA LAS ESQUINAS --}}
+                        @if($pendientes > 0 || $enProceso > 0)
+                            
+                            {{-- PENDIENTES: Esquina Superior Izquierda (left-4) --}}
+                            @if($pendientes > 0)
+                                <span class="absolute top-4 left-4 bg-smart-error/10 text-smart-error border border-smart-error/20 text-[10px] font-black px-3 py-1 rounded-full shadow-sm flex items-center gap-1.5 animate-bounce duration-300" style="animation-iteration-count: 3;">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-current animate-pulse"></span>
+                                    {{ $pendientes }} PENDIENTES
+                                </span>
+                            @endif
+
+                            {{-- EN PROCESO: Esquina Superior Derecha (right-4) --}}
+                            @if($enProceso > 0)
+                                <span class="absolute top-4 right-4 bg-smart-warning/10 text-smart-warning border border-smart-warning/20 text-[10px] font-black px-3 py-1 rounded-full shadow-sm flex items-center gap-1.5 animate-bounce duration-300" style="animation-iteration-count: 3;">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-current animate-pulse"></span>
+                                    {{ $enProceso }} EN PROCESO
+                                </span>
+                            @endif
+                            
+                            
+
                         @else
-                            <span class="absolute top-4 right-4 bg-gray-100 dark:bg-black/20 text-gray-500 dark:text-smart-linea text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1">
+                            {{-- AL DÍA: Esquina Superior Derecha (right-4) --}}
+                            <span class="absolute top-4 right-4 bg-gray-100 dark:bg-black/20 text-gray-500 dark:text-smart-linea text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
                                 <span class="material-symbols-outlined text-sm">check_circle</span>
                                 AL DÍA
                             </span>
                         @endif
 
-                        <div class="flex justify-center mb-4 mt-2">
+                        <div class="flex justify-center mb-4 mt-6">
                             <span class="material-symbols-outlined text-6xl {{ $tema['icon'] }} group-hover:scale-110 transition-transform duration-300">
                                 {{ $cat->icono ?? 'help' }}
                             </span>
@@ -62,7 +81,7 @@
                 @endforeach
                 
                 <a href="{{ route('categorias.index') }}" 
-                   class="bg-gray-50 dark:bg-[#212121]/50 p-8 rounded-xl border-2 border-dashed border-gray-300 dark:border-white/10 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-[#2a2a2a] hover:border-smart-cobalto hover:text-smart-cobalto transition-all cursor-pointer group">
+                   class="bg-gray-50 dark:bg-[#212121]/50 p-8 rounded-xl border-2 border-dashed border-gray-300 dark:border-white/10 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-[#2a2a2a] hover:border-smart-cobalto hover:text-smart-cobalto transition-all cursor-pointer group mt-4">
                     <span class="material-symbols-outlined text-5xl mb-2 group-hover:rotate-90 transition-transform duration-500">
                         settings_suggest
                     </span>

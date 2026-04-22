@@ -106,9 +106,27 @@
             data: {
                 labels: nombresCategorias,
                 datasets: [
-                    { label: 'Pendientes', data: dataPendientes, backgroundColor: '#E74C3C' },
-                    { label: 'En Proceso', data: dataProceso, backgroundColor: '#F39C12' },
-                    { label: 'Resueltos', data: dataResueltos, backgroundColor: '#1ABC9C' }
+                    { 
+                        label: 'Pendientes', 
+                        data: dataPendientes, 
+                        backgroundColor: '#E74C3C',
+                        barPercentage: 1, // <--- Elimina el espacio entre barras del mismo grupo
+                        categoryPercentage: 0.8 // <--- Controla el ancho del grupo completo
+                    },
+                    { 
+                        label: 'En Proceso', 
+                        data: dataProceso, 
+                        backgroundColor: '#F39C12',
+                        barPercentage: 1,
+                        categoryPercentage: 0.8
+                    },
+                    { 
+                        label: 'Resueltos', 
+                        data: dataResueltos, 
+                        backgroundColor: '#1ABC9C',
+                        barPercentage: 1,
+                        categoryPercentage: 0.8
+                    }
                 ]
             },
             options: {
@@ -127,7 +145,11 @@
                     }
                 },
                 scales: {
-                    y: { beginAtZero: true, grid: { color: 'rgba(156, 163, 175, 0.1)' }, ticks: { color: universalTextColor } },
+                    y: { 
+                        beginAtZero: true, 
+                        grid: { color: 'rgba(156, 163, 175, 0.1)' }, 
+                        ticks: { color: universalTextColor } 
+                    },
                     x: { 
                         grid: { display: false }, 
                         ticks: { 
